@@ -1,11 +1,14 @@
-//
-//  openiapp.c
-//  openiapp
-//
-//  Created by cal0x on 15.01.14.
-//  Copyright 2014. All rights reserved
-//
-//
+/*
+*
+*	input:	openiapp.c
+*	output:	openiapp
+*
+*	Created by cal0x on 15.01.14.
+*	Revision by @kaiwaiata 30.04.14.
+*
+*	Copyright 2014. All rights reserved
+*
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +46,9 @@
 #define KMAG  "\x1B[35m"
 #define KCYN  "\x1B[36m"
 #define KWHT  "\x1B[37m"
+
+//search 'Secure Coding' in this file for more info..
+#define NAME_DEF 255
 
 uint64_t gFh = 0;
 unsigned int cb = 0;
@@ -123,9 +129,10 @@ void minst_client(const char *operation, plist_t status, void *unused) {
 
 void help(void){
     printf("%sHELP \n", KYEL);
-    printf("%s    [*] IPA Path from pc or mac | Name of IPA \n", KYEL);
+    printf("%s    [*] IPA Path from Computer | Name of IPA \n", KYEL);
     printf("%s    [*] Example: \n", KYEL);
-    printf("%s    [*] ./openiapp /Users/cal0x/Desktop/app.ipa app.ipa \n", KYEL);
+    printf("%s    [*] chmod +x openiapp\n", KYEL);
+    printf("%s    [*] ./openiapp /Users/youruser/Desktop/app.ipa app.ipa \n", KYEL);
     printf("%s", KNRM);
 }
 void home(void) {
@@ -133,8 +140,10 @@ void home(void) {
     system("chmod +x home");
     system("./home");
     printf("    [*] Welcome to openiapp\n");
-    printf("%s    [*] Thanks for using openiapp, opensource IPA App installer program for iOS devices by @cal0x.\n", KMAG);
+    printf("%s    [*] Thanks for using openiapp, opensource IPA App installer program for iOS devices.\n", KMAG);
     printf("%s    [*] Maybe you use a tool wich use openiapp's source code or you run a compiled version of openiapp.\n", KCYN);
+    printf("%s    [*] Credits: 	Created by @cal0x		15.01.14\n", KCYN);
+    printf("%s    [*] 		Revision by @kaiwaiata		30.04.14\n", KCYN);
     printf("%s", KNRM);
 }
 int main(int argc, char *argv[]) {
@@ -154,6 +163,14 @@ int main(int argc, char *argv[]) {
         help();
         return -1;
     }
+    else if(argc == 2 && strcmp(argv[1], "man")==0){ //revision: 30.04.14
+        help();
+        return -1;
+    }
+    else if(argc == 2 && strcmp(argv[1], "info")==0){ //revision: 30.04.14
+        help();
+        return -1;
+    }
     if(argc == 3)
     {
         char *dotipa = argv[1];
@@ -161,11 +178,24 @@ int main(int argc, char *argv[]) {
         char *dotipa2 = argv[2];
         
         char *var="Downloads/";
-        char name[255];
         
-        strcpy(name, var);
-        strcat(name, dotipa2);
-        
+	/*
+	*	Secure Coding revision by @kaiwaiata
+	*	Avoiding Buffer Overflows and Underflows
+	*	Simply trying avoiding segmentation fault
+	*	- change 'strcpy(..);' to 'strlcpy(..);'
+	*	- change 'strcat(..);' to 'strlcat(..);'
+	*	- change 'char name[255];' to char name[NAME_DEF]; (previous: #define NAME_DEF 255)
+	*/
+	char name[NAME_DEF];	//+
+//	char name[255];		//-
+
+	strlcpy(name, var); 	//+
+//	strcpy(name, var);	//-
+
+	strlcat(name, dotipa2);  //+
+//	strcat(name, dotipa2);   //-
+   
         idevice_error_t idevice_error = 0;
         idevice_error = idevice_new(&idevice, NULL);
         if (idevice_error != IDEVICE_E_SUCCESS) {
@@ -193,7 +223,7 @@ int main(int argc, char *argv[]) {
         
         afc_do_it = afc_send_file(afc_client, dotipa, name);
         if (afc_do_it != AFC_E_SUCCESS) {
-            printf("%s    [*] Error with sending file!\n", KRED);
+            printf("%s    [-] Error with sending file!\n", KRED);
             printf("%s", KNRM);
         }
         else {
@@ -223,7 +253,7 @@ int main(int argc, char *argv[]) {
         plist_t plist = instproxy_client_options_new();
         install_error = instproxy_install(install_proxy, name, plist, &minst_client, NULL );
         if (install_error != INSTPROXY_E_SUCCESS) {
-            printf("%s    [*] Error with installing App\n", KRED);
+            printf("%s    [-] Error with installing App\n", KRED);
             printf("%s", KNRM);
             return -1;
             instproxy_client_options_free(plist);
